@@ -1,0 +1,24 @@
+name: Tester
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+jobs:
+  PHPUnit:
+    name: php_tester
+    runs-on: "ubuntu-latest"
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      - name: PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '7.4'
+          extensions: gd,mbstring
+          coverage: none
+      - name: Install Dependencies
+        run: composer install --no-progress
+      - name: Run PHPUnit
+        run: composer test
