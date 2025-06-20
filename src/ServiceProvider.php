@@ -13,17 +13,30 @@ namespace Ymiras\ThinkCaptcha;
 
 use think\Cache;
 use think\Config;
+use think\facade\Validate;
 use think\Service;
 
 class ServiceProvider extends Service
 {
-    public function register()
+    public function register(): void
     {
-        $this->app->bind('captcha', function ($app) {
+        $this->app->bind('captcha', function () {
             return new Captcha(
                 $this->app->get(Cache::class),
                 $this->app->get(Config::class)
             );
+        });
+    }
+
+    public function boot(): void
+    {
+        Validate::maker(function ($validate) {
+            $validate->extend('captcha', function ($value, $rule, $data = []) {
+                $rule = $rule ?? 'uniq_key';
+                $key = $data[$rule] ?? '';
+
+                return app('captcha')->verify($key, $value);
+            });
         });
     }
 }

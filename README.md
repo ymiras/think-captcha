@@ -34,12 +34,6 @@ composer require ymiras/think-captcha
 
 ## 🔧 使用方法
 
-#### 1. 注册服务提供者
-
-#### 2. 获取并使用 CAPTCHA 服务
-
-你可以通过依赖注入或容器获取服务：
-
 ##### 示例：控制器中使用
 ```php
 class CaptchaController
@@ -55,19 +49,56 @@ class CaptchaController
     public function show()
     {
         $key = 'login_captcha';
+        // captcha_generate($key); 等同.
         $result = $this->captcha->generate($key);
-        return response($result->base64(), 200, ['Content-Type' => 'image/png']);
+        
+        // 返回图片二进制流
+        return response($result->image, 200, ['Content-Type' => 'image/png']);
+        
+        // 返回 base64
+        return response()->json([
+            'captcha' => $result->base64,
+        ])
     }
     // 验证用户输入
     public function verify(string $input)
     {
         $key = 'login_captcha';
+        // 可以替换为
+        // captcha_verify($key, $input); 等同.
+        // 也可以使用 validate 中 captcha 验证规则。
+        // 示例 CaptchaValidate.
         if ($this->captcha->verify($key, $input)) {
             return json(['code' => 200, 'message' => '验证成功']);
         } else {
             return json(['code' => 400, 'message' => '验证失败']);
         }
     }
+}
+
+class CaptchaValidate extends Validate
+{
+    /**
+     * 定义验证规则
+     * 格式：'字段名' =>  ['规则1','规则2'...]
+     *
+     * @var array
+     */
+    protected $rule = [
+        'uniq_key' => ['require'],
+        'code' => ['require', 'captcha:uniq_key']
+    ];
+    /**
+     * 定义错误信息
+     * 格式：'字段名.规则名' =>  '错误信息'
+     *
+     * @var array
+     */
+    protected $message = [
+        'uniq_key.require' => '请输入验证码标识',
+        'code.require' => '请输入验证码',
+        'code.captcha' => '验证码错误',
+    ];
 }
 ```
 
